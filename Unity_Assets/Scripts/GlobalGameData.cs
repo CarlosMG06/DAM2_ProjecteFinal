@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
+using System.Linq;
 
 public static class GlobalGameData {
     /*
@@ -20,6 +20,9 @@ public static class GlobalGameData {
     private static List<LevelSaveData> levels;
 
     public static List<SongData> GetSongs() { return songs; }
+    public static SongData GetSongFromTitle(string title) {
+        return songs.Where(song => song.GetTitle() == title).ToList()[0];
+    }
     public static OptionsData GetOptions() { return options; }
     public static List<LevelSaveData> GetLevels() { return levels; }
 }
