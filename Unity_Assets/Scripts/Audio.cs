@@ -4,7 +4,12 @@ using UnityEngine;
 
 public class Audio : MonoBehaviour {
     void Awake() {
-        // Destroy after playing
-        Destroy(gameObject, GetComponent<AudioSource>().clip.length);
+        // Destroy after playing if it doesn't loop
+        //AudioSource audioSource = this.GetComponent<AudioSource>();
+        //audioSource.Play();
+        //print(audioSource == null);
+        //if (audioSource != null && audioSource.clip != null && !audioSource.loop) {
+        //    Destroy(this, audioSource.clip.length);
+        //}
     }
 }

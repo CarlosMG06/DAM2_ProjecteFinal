@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,10 +10,43 @@ public class Menu : MonoBehaviour
     [SerializeField] private GameObject LevelSelectUI;
     [SerializeField] private GameObject OptionsUI;
     [SerializeField] private GameObject LeaderboardUI;
+    [SerializeField] private GameObject MusicSlider;
+    [SerializeField] private TextMeshProUGUI MusicVolumeText;
+    [SerializeField] private GameObject SFXSlider;
+    [SerializeField] private TextMeshProUGUI SFXVolumeText;
+    [SerializeField] private AudioPlayer audioPlayer;
+    [SerializeField] private ChartComposer chartComposer;
+    private static bool shouldShowLevelSelect = false;
+
+    public static void SetShowLevelSelect(bool show)
+    {
+        shouldShowLevelSelect = show;
+    }
 
     void Start()
     {
-        ToTitle();
+        if (shouldShowLevelSelect)
+        {
+            ToLevelSelect();
+            shouldShowLevelSelect = false;
+        }
+        else
+        {
+            ToTitle();
+        }
+        chartComposer.DefineCharts();
+
+        // Set volumes according to saved options
+        float musicVolume = GlobalGameData.GetOptions().GetMusicVolume();
+        float sfxVolume = GlobalGameData.GetOptions().GetSFXVolume();
+        MusicSlider.GetComponent<Slider>().value = musicVolume * 20;
+        SFXSlider.GetComponent<Slider>().value = sfxVolume * 20;
+        MusicVolumeText.text = "Music: " + musicVolume * 100 + "%";
+        SFXVolumeText.text = "SFX: " + sfxVolume * 100 + "%";
+
+        // Play Main Menu music
+        AudioClip mainMenuMusic = Resources.Load<AudioClip>("Audio/Music/Fruit Salad");
+        audioPlayer.PlayMusic(mainMenuMusic);
     }
     public void ToTitle()
     {
@@ -41,11 +75,26 @@ public class Menu : MonoBehaviour
         Application.Quit();
     }
 
-    public void LoadLevel(string songTitle)
+    public void LoadLevel(int songIndex)
     {
-        SongData songData = GlobalGameData.GetSongFromTitle(songTitle);
+        SongData songData = GlobalGameData.GetSongs()[songIndex];
         LevelRunData.SetSong(songData);
+        LevelRunData.SetSongIndex(songIndex);
+        
         SceneManager.LoadScene("Level");
+    }
+
+    public void SetMusicVolume()
+    {
+        float value = MusicSlider.GetComponent<Slider>().value;
+        MusicVolumeText.text = "Music: " + value * 5 + "%";
+        audioPlayer.SetMusicVolume(value/20);
+    }
+    public void SetSFXVolume()
+    {
+        float value = SFXSlider.GetComponent<Slider>().value;
+        SFXVolumeText.text = "SFX: " + value * 5 + "%";
+        audioPlayer.SetSFXVolume(value/20);
     }
 
 }

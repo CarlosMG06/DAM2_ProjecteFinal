@@ -1,6 +1,6 @@
 *.meta
-*/*.meta
-.DS_Store
-*/.DS_Store
+*.DS_Store
 
+AddressableAssetsData
+Localization
 TextMesh Pro

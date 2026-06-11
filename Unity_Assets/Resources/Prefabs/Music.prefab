@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5956442564276557901}
   - component: {fileID: 1634240278565056077}
-  - component: {fileID: 5053518428286965523}
+  - component: {fileID: 4394064339740247007}
   m_Layer: 0
   m_Name: Music
   m_TagString: Music
@@ -45,7 +45,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 0
+  m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -130,7 +130,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &5053518428286965523
+--- !u!114 &4394064339740247007
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

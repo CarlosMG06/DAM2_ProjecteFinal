@@ -12,23 +12,42 @@ public class AudioPlayer : MonoBehaviour
     */
 
     private static AudioPlayer instance;
-    private GameObject SoundPrefab;
-    private Transform Canvas;
+    [SerializeField] private GameObject SFXPrefab;
+    [SerializeField] private GameObject MusicPrefab;
+    [SerializeField] private Transform Canvas;
 
-    private SongData currentSong;
+    private int currentSongLengthMs;
+
+    [SerializeField] private Display display;
     
     void Awake() {
         instance = this;
-        // OptionsData optionsData = SaveFile.Load<OptionsData>("OptionsData.Dat");
-        // if (optionsData != null) {
-        //     SetVolume(optionsData.volume);
-        // }
     }
 
-    public static void PlaySound(AudioClip clip, float relativeVolume = 1f, string text = "", float pitch = 1f) {
+    public void SetSFXVolume(float newVolume) {
+        GlobalGameData.GetOptions().SetSFXVolume(newVolume);
+
+        // Update any existing SFX GameObjects
+        GameObject[] sfx = GameObject.FindGameObjectsWithTag("SFX");
+        foreach (GameObject obj in sfx){
+            obj.GetComponent<AudioSource>().volume = newVolume;
+        }
+    }
+
+    public void SetMusicVolume(float newVolume) {
+        GlobalGameData.GetOptions().SetMusicVolume(newVolume);
+
+        // Update any existing music GameObjects
+        GameObject[] music = GameObject.FindGameObjectsWithTag("Music");
+        foreach (GameObject obj in music){
+            obj.GetComponent<AudioSource>().volume = newVolume;
+        }
+    }
+
+    public void PlaySound(AudioClip clip, float relativeVolume = 1f, string text = "", float pitch = 1f) {
         if (clip == null) 
             Debug.LogError("AudioClip is null");
-        GameObject obj = Instantiate(instance.SoundPrefab, instance.Canvas);
+        GameObject obj = Instantiate(instance.SFXPrefab);
         AudioSource source = obj.GetComponent<AudioSource>();
         source.clip = clip;
         source.volume = relativeVolume * GlobalGameData.GetOptions().GetSFXVolume();
@@ -36,45 +55,59 @@ public class AudioPlayer : MonoBehaviour
         source.pitch = pitch;
     } 
 
-    public static void PlayMusic() {
-
-    }
-
-    public static void SetSFXVolume(float newVolume) {
-        GlobalGameData.GetOptions().SetSFXVolume(newVolume);
-
-        // Update any existing SFX GameObjects
-        GameObject[] sfx = GameObject.FindGameObjectsWithTag("SFX");
-        foreach (GameObject obj in sfx){
-            obj.GetComponent<AudioSource>().volume = newVolume*0.5f;
+    public void PlayMusic(AudioClip clip, bool loop = true, bool broadcastEnd = false)
+    {   
+       GameObject obj = Instantiate(instance.MusicPrefab);
+       AudioSource source = obj.GetComponent<AudioSource>();
+       source.clip = clip;
+       source.volume = GlobalGameData.GetOptions().GetMusicVolume();
+       currentSongLengthMs = (int)(clip.length * 1000);
+       if (loop)
+        {
+            source.loop = true;
+        }
+        source.Play();
+        if (broadcastEnd)
+        {
+            StartCoroutine(BroadcastEndOfSong(source));
         }
     }
 
-    public static void SetMusicVolume(float newVolume) {
-        GlobalGameData.GetOptions().SetMusicVolume(newVolume);
+    private IEnumerator BroadcastEndOfSong(AudioSource source)
+    {
+        while (source.isPlaying)
+        {
+            yield return null;
+        }
+        BroadcastMessage("OnSongEnd", SendMessageOptions.DontRequireReceiver);
+    }
 
-        // Update any existing music GameObjects
-        GameObject[] music = GameObject.FindGameObjectsWithTag("Music");
-        foreach (GameObject obj in music){
-            obj.GetComponent<AudioSource>().volume = newVolume*0.5f;
+    void OnLevelStart()
+    {
+        AudioClip song = LevelRunData.GetSong().GetAudio();
+        PlayMusic(song, false, true);
+        StartCoroutine(UpdateTimePosition());
+    }
+
+    void OnLevelEnd()
+    {
+        StopCoroutine(UpdateTimePosition());
+    }
+    
+    IEnumerator UpdateTimePosition()
+    {
+        while (true)
+        {
+            // Update LevelRunData.timePositionMs with deltaTime
+            int deltaTimeMs = (int)(Time.deltaTime * 1000);
+            int newTimePosition = LevelRunData.GetTimePositionMs() + deltaTimeMs;
+            LevelRunData.SetTimePositionMs(newTimePosition);
+            display.UpdateSongProgress(newTimePosition, currentSongLengthMs);
+            yield return null;
         }
     }
 
-    void Update() {
-        if (LevelRunData.GetIsActive())
-            updateTimePosition();
+    public int GetCurrentSongLengthMs() {
+        return currentSongLengthMs;
     }
-
-    private void updateTimePosition() {
-
-    }
-
-    void levelStart(int levelNumber) {
-        // TODO: start playing music
-    }
-
-    void levelEnd() {
-        // TODO: stop playing music
-    }
-
 }
