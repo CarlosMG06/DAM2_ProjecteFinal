@@ -2,7 +2,8 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
-const swaggerJsdoc = require("swagger-jsdoc");
+
+const swaggerSpecs = require('./src_old/config/swagger');
 
 const app = express();
 const PORT = 3000;
@@ -12,119 +13,13 @@ const DB_PATH = path.join(__dirname, "db.json");
 app.use(express.json());
 
 // ── Swagger ───────────────────────────────────────────────────────────────────
-const swaggerSpec = swaggerJsdoc({
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Rhythm Game API",
-      version: "1.0.0",
-      description:
-        "API para gestionar canciones, jugadores y puntuaciones de un juego de ritmo. " +
-        "Los datos se persisten en un archivo `db.json`.",
-    },
-    components: {
-      schemas: {
-        ChartNote: {
-          type: "object",
-          properties: {
-            inputBeat: { type: "number", example: 1.5, description: "Beat en el que aparece la nota" },
-            inputKey:  { type: "string", enum: ["left", "right"], example: "left" },
-          },
-        },
-        Song: {
-          type: "object",
-          properties: {
-            songId:    { type: "string",  example: "s001" },
-            songTitle: { type: "string",  example: "Neon Pulse" },
-            bpm:       { type: "number",  example: 140 },
-            audioFile: { type: "string",  example: "neon_pulse.mp3" },
-            offset:    { type: "number",  example: 0.05, description: "Offset en segundos" },
-            chart:     { type: "array", items: { $ref: "#/components/schemas/ChartNote" } },
-          },
-        },
-        Run: {
-          type: "object",
-          properties: {
-            highscore: { type: "integer", example: 98500 },
-            maxCombo:  { type: "integer", example: 312 },
-            rank:      { type: "string",  example: "S" },
-          },
-        },
-        LevelEntry: {
-          type: "object",
-          properties: {
-            songId: { type: "string", example: "s001" },
-            runs: {
-              type: "array",
-              maxItems: 5,
-              description: "Hasta 5 mejores runs, ordenados por highscore descendente",
-              items: { $ref: "#/components/schemas/Run" },
-            },
-          },
-        },
-        Player: {
-          type: "object",
-          properties: {
-            playerId:   { type: "string", example: "p001" },
-            playerName: { type: "string", example: "RhythmMaster" },
-            levelRuns: {
-              type: "array",
-              items: { $ref: "#/components/schemas/LevelEntry" },
-            },
-          },
-        },
-        SongScore: {
-          type: "object",
-          description: "Mejor puntuación de un jugador en una canción concreta",
-          properties: {
-            playerId:   { type: "string",  example: "p001" },
-            playerName: { type: "string",  example: "RhythmMaster" },
-            highscore:  { type: "integer", example: 98500 },
-            maxCombo:   { type: "integer", example: 312 },
-            rank:       { type: "string",  example: "S" },
-          },
-        },
-        Error: {
-          type: "object",
-          properties: {
-            error: { type: "string", example: "Song not found" },
-          },
-        },
-      },
-    },
-  },
-  apis: [__filename],
-});
-
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function readDB() {
-  return JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
-}
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf-8");
-}
+
 
 // ── SONGS ─────────────────────────────────────────────────────────────────────
 
-/**
- * @openapi
- * /songs:
- *   get:
- *     summary: Lista todas las canciones
- *     tags: [Songs]
- *     responses:
- *       200:
- *         description: Array con todas las canciones
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Song'
- */
-app.get("/songs", (req, res) => {
+, (req, res) => {
   const db = readDB();
   res.json(db.songs);
 });
@@ -437,7 +332,7 @@ app.get("/scores/:songId", (req, res) => {
   }
 
   const scores = db.players
-    .filter((p) => p.levelRuns.some((e) => e.songId === songId))
+    .filter((p) => p.levelRuns.some((e) => e.songId === songId && e.runs?.length > 0))
     .map((p) => {
       const entry = p.levelRuns.find((e) => e.songId === songId);
       const best = entry.runs[0];

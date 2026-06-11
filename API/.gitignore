@@ -1,4 +1,5 @@
 .env
+.env.test
 proxmox/config.env
 
 node_modules
@@ -7,3 +8,5 @@ logs/
 logs_test/
 coverage/
 package-lock.json
+src_old
+server_old.js
