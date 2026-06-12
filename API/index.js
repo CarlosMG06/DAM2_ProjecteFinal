@@ -7,9 +7,11 @@ const fs          = require("fs");
 const path        = require("path");
 const yaml        = require("js-yaml");
 const swaggerUi   = require("swagger-ui-express");
-const sequelize   = require("./src/database");
-const swaggerSpec = require("./src/swagger");
+const { sequelize } = require("./src/config/database");
+const swaggerSpec = require("./src/config/swagger");
 const routes      = require("./src/routes");
+const { logger, expressLogger } = require('./src/config/logger');
+const { seedDatabase } = require('./data/seed_database') 
 
 const app  = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
@@ -34,8 +36,7 @@ async function start() {
   console.log("✓ Database connected");
 
   const force = process.env.DB_SYNC_FORCE === "true";
-  await sequelize.sync({ force });
-  console.log(`✓ Models synced${force ? " (force)" : ""}`);
+  await seedDatabase(force);
 
   // 2. Update swagger.yaml
   const yamlPath = path.join(__dirname, "swagger.yaml");

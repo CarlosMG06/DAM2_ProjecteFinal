@@ -112,4 +112,4 @@ Song.hasMany(Score, { foreignKey: "songId", onDelete: "CASCADE" });
 Score.belongsTo(Song, { foreignKey: "songId" });
 
 
-module.exports = sequelize;
+module.exports = { sequelize, Song, ChartNote, Player, Score };

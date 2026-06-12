@@ -1,6 +1,6 @@
 const { validateUUID } = require('./utils');
 const { Op } = require("sequelize");
-const { Song, ChartNote, Player, Score: Score } = require("./database");
+const { Song, ChartNote, Player, Score } = require("./config/database");
 
 const MAX_SCORES_PER_SONG = 5;
 

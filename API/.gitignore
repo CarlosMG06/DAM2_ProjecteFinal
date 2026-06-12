@@ -8,5 +8,7 @@ logs/
 logs_test/
 coverage/
 package-lock.json
+
 src_old
 server_old.js
+/data/songs/wrong-vine
