@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
-  title: Rhythm Game API
+  title: Fruity Tunes API
   version: 1.0.0
-  description: API para gestionar canciones, jugadores y puntuaciones de un juego de ritmo. Los datos se persisten en un archivo db.json.
+  description: API per gestionar cançons, jugadors i puntuacions del joc de ritme Fruity Tunes
 components:
   schemas:
     ChartNote:
@@ -11,7 +11,7 @@ components:
         inputBeat:
           type: number
           example: 1.5
-          description: Beat en el que aparece la nota
+          description: Beat on apareix la nota
         inputKey:
           type: string
           enum:
@@ -22,28 +22,31 @@ components:
       type: object
       properties:
         songId:
-          type: string
-          example: s001
+          type: uuid
+          example: 019ebbb2-31cb-7879-a4a6-9aa3e6b89ff3
         songTitle:
           type: string
-          example: Neon Pulse
+          example: Must, Be Nice
         bpm:
           type: number
           example: 140
         audioFile:
           type: string
-          example: neon_pulse.mp3
+          example: grapes1_must-be-nice.mp3
         offset:
           type: number
           example: 0.05
-          description: Offset en segundos
+          description: Offset en segons
         chart:
           type: array
           items:
             $ref: '#/components/schemas/ChartNote'
-    Run:
+    Score:
       type: object
       properties:
+        scoreId:
+          type: uuid
+          example: 019ebbb2-31cb-7250-925d-c5f8341fc4c2
         highscore:
           type: integer
           example: 98500
@@ -57,34 +60,34 @@ components:
       type: object
       properties:
         songId:
-          type: string
-          example: s001
-        runs:
+          type: uuid
+          example: 019ebbb2-31cb-7879-a4a6-9aa3e6b89ff3
+        scores:
           type: array
           maxItems: 5
-          description: Hasta 5 mejores runs, ordenados por highscore descendente
+          description: Fins a 5 millors puntuacions, en ordre descendent
           items:
-            $ref: '#/components/schemas/Run'
+            $ref: '#/components/schemas/Score'
     Player:
       type: object
       properties:
         playerId:
-          type: string
-          example: p001
+          type: uuid
+          example: 019ebbb2-31cb-7a60-8e1d-ce9956756667
         playerName:
           type: string
           example: RhythmMaster
-        levelRuns:
+        levelScores:
           type: array
           items:
             $ref: '#/components/schemas/LevelEntry'
-    SongScore:
+    LeaderboardEntry:
       type: object
-      description: Mejor puntuación de un jugador en una canción concreta
+      description: Fila de la taula de classificacions
       properties:
         playerId:
-          type: string
-          example: p001
+          type: uuid
+          example: 019ebbb2-31cb-7a60-8e1d-ce9956756667
         playerName:
           type: string
           example: RhythmMaster
@@ -102,16 +105,16 @@ components:
       properties:
         error:
           type: string
-          example: Song not found
+          example: Cançó no trobada
 paths:
   /songs:
     get:
-      summary: Lista todas las canciones
+      summary: Llista totes les cançons
       tags:
         - Songs
       responses:
         '200':
-          description: Array con todas las canciones
+          description: Array amb totes les cançons
           content:
             application/json:
               schema:
@@ -119,7 +122,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Song'
     post:
-      summary: Añade una nueva canción
+      summary: Afegeix una nova cançó
       tags:
         - Songs
       requestBody:
@@ -135,17 +138,18 @@ paths:
                 - audioFile
               properties:
                 songId:
-                  type: string
-                  example: s003
+                  type: uuid
+                  example: 019ebbb2-31cb-7879-a4a6-9aa3e6b89ff3
                 songTitle:
                   type: string
-                  example: Dark Groove
+                  example: Must
+                  Be Nice: null
                 bpm:
                   type: number
                   example: 120
                 audioFile:
                   type: string
-                  example: dark_groove.mp3
+                  example: grapes1_must-be-nice.mp3
                 offset:
                   type: number
                   example: 0
@@ -155,26 +159,26 @@ paths:
                     $ref: '#/components/schemas/ChartNote'
       responses:
         '201':
-          description: Canción creada
+          description: Cançó creada
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Song'
         '400':
-          description: Faltan campos obligatorios
+          description: Falten camps obligatoris
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: Ya existe una canción con ese songId
+          description: Ja existeix una cançó amb aquest songId
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /songs/{songId}:
     get:
-      summary: Obtiene una canción por ID
+      summary: Obté una cançó per ID
       tags:
         - Songs
       parameters:
@@ -182,24 +186,95 @@ paths:
           name: songId
           required: true
           schema:
-            type: string
-          example: s001
+            type: uuid
+          example: 019ebbb2-31cb-7879-a4a6-9aa3e6b89ff3
       responses:
         '200':
-          description: Datos de la canción
+          description: Dades de la cançó
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Song'
         '404':
-          description: Canción no encontrada
+          description: Cançó no trobada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players:
+    get:
+      summary: Llista tots els jugadors
+      description: Retorna una llista de tots els jugadors registrats al sistema, sense incloure les seves puntuacions
+      tags:
+        - Players
+      responses:
+        '200':
+          description: Llista de jugadors obtinguda correctament
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        playerId:
+                          type: string
+                          format: uuid
+                          example: 019ebbb2-31cb-7a60-8e1d-ce9956756667
+                          description: ID únic del jugador
+                        playerName:
+                          type: string
+                          example: RhythmMaster
+                          description: Nom del jugador
+        '500':
+          description: Error intern del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Error en obtenir els jugadors
+    post:
+      summary: Registra un nou jugador
+      tags:
+        - Players
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerName
+              properties:
+                playerName:
+                  type: string
+                  example: ComboKing
+      responses:
+        '201':
+          description: Jugador creat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '400':
+          description: Falten camps obligatoris
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Ja existeix un jugador amb aquest playerId
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /players/{playerId}:
     get:
-      summary: Obtiene un jugador con todos sus runs
+      summary: Obté un jugador amb totes les seves puntuacions
       tags:
         - Players
       parameters:
@@ -207,26 +282,35 @@ paths:
           name: playerId
           required: true
           schema:
-            type: string
-          example: p001
+            type: uuid
+          example: 019ebbb2-31cb-7a60-8e1d-ce9956756667
       responses:
         '200':
-          description: Datos del jugador y su historial de runs
+          description: Dades del jugador i puntuacions agrupades per cançó (fins a 5 puntuacions per cançó)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Player'
         '404':
-          description: Jugador no encontrado
+          description: Jugador no trobat
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /players:
+  /scores/{playerId}:
     post:
-      summary: Registra un nuevo jugador
+      summary: Envia una nova puntuació d'un jugador en una cançó
+      description: |
+        Afegeix la puntuació a l'historial d'aquesta cançó pel jugador. Es conserven únicament les **5 millors puntuacions** ordenades per highscore descendent Si el jugador ja té 5 puntuacions i la nova no sepra la pitjor, es descarta. Si el jugador ya tiene 5 scores y el nuevo no supera al peor, se descarta.
       tags:
         - Players
+      parameters:
+        - in: path
+          name: playerId
+          required: true
+          schema:
+            type: uuid
+          example: 019ebbb2-31cb-7a60-8e1d-ce9956756667
       requestBody:
         required: true
         content:
@@ -235,62 +319,13 @@ paths:
               type: object
               required:
                 - playerId
-                - playerName
-              properties:
-                playerId:
-                  type: string
-                  example: p003
-                playerName:
-                  type: string
-                  example: ComboKing
-      responses:
-        '201':
-          description: Jugador creado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Player'
-        '400':
-          description: Faltan campos obligatorios
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Ya existe un jugador con ese playerId
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /players/{playerId}/runs:
-    post:
-      summary: Envía una nueva puntuación para un jugador
-      description: |
-        Añade el run al historial de esa canción para el jugador. Se conservan únicamente los **5 mejores runs** ordenados por highscore descendente. Si el jugador ya tiene 5 runs y el nuevo no supera al peor, se descarta.
-      tags:
-        - Players
-      parameters:
-        - in: path
-          name: playerId
-          required: true
-          schema:
-            type: string
-          example: p001
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - songId
                 - highscore
                 - maxCombo
                 - rank
               properties:
-                songId:
-                  type: string
-                  example: s001
+                playerId:
+                  type: uuid
+                  example: 019ebbb2-31cb-7a60-8e1d-ce9956756667
                 highscore:
                   type: integer
                   example: 105000
@@ -302,27 +337,27 @@ paths:
                   example: SS
       responses:
         '200':
-          description: Jugador actualizado con el nuevo historial de runs
+          description: Jugador actualitzat amb el nou historial de puntuacions
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Player'
         '400':
-          description: Faltan campos obligatorios
+          description: Falten camps obligatoris
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Jugador o canción no encontrados
+          description: Jugador o cançó no trobats
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /scores/{songId}:
     get:
-      summary: Puntuaciones de todos los jugadores en una canción
-      description: Devuelve el mejor run de cada jugador para esa canción, ordenados de mayor a menor highscore.
+      summary: Puntuacions de tots els jugadors en una cançó
+      description: Retorna la millor puntuació de cada jugador per aquesta cançó, ordenats de major a menor.
       tags:
         - Scores
       parameters:
@@ -330,25 +365,25 @@ paths:
           name: songId
           required: true
           schema:
-            type: string
-          example: s001
+            type: uuid
+          example: 019ebbb2-31cb-7879-a4a6-9aa3e6b89ff3
       responses:
         '200':
-          description: Lista de puntuaciones ordenada
+          description: Llista de puntuacions ordenada
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   songId:
-                    type: string
-                    example: s001
+                    type: uuid
+                    example: 019ebbb2-31cb-7879-a4a6-9aa3e6b89ff3
                   scores:
                     type: array
                     items:
-                      $ref: '#/components/schemas/SongScore'
+                      $ref: '#/components/schemas/LeaderboardEntry'
         '404':
-          description: Canción no encontrada
+          description: Cançó no trobada
           content:
             application/json:
               schema:

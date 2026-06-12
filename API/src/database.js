@@ -1,4 +1,5 @@
 const { Sequelize, DataTypes } = require("sequelize");
+const { v7: uuidv7 } = require("uuid");
 
 // Credentials
 
@@ -19,9 +20,10 @@ const sequelize = new Sequelize(
 // ── Song ──────────────────────────────────────────────────────────────────────
 const Song = sequelize.define("Song", {
   songId: {
-    type:       DataTypes.STRING,
-    primaryKey: true,
-    allowNull:  false,
+    type:         DataTypes.UUID,
+    primaryKey:   true,
+    allowNull:    false,
+    defaultValue: uuidv7,
   },
   songTitle: {
     type:      DataTypes.STRING,
@@ -46,9 +48,10 @@ const Song = sequelize.define("Song", {
 // A note belonging to a Song
 const ChartNote = sequelize.define("ChartNote", {
   id: {
-    type:          DataTypes.INTEGER,
-    primaryKey:    true,
-    autoIncrement: true,
+    type:         DataTypes.UUID,
+    primaryKey:   true,
+    allowNull:    false,
+    defaultValue: uuidv7,
   },
   inputBeat: {
     type:      DataTypes.FLOAT,
@@ -63,9 +66,10 @@ const ChartNote = sequelize.define("ChartNote", {
 // ── Player ────────────────────────────────────────────────────────────────────
 const Player = sequelize.define("Player", {
   playerId: {
-    type:       DataTypes.STRING,
-    primaryKey: true,
-    allowNull:  false,
+    type:         DataTypes.UUID,
+    primaryKey:   true,
+    allowNull:    false,
+    defaultValue: uuidv7
   },
   playerName: {
     type:      DataTypes.STRING,
@@ -73,14 +77,15 @@ const Player = sequelize.define("Player", {
   },
 });
  
-// ── Run ───────────────────────────────────────────────────────────────────────
-// A run attempt by a Player on a Song.
+// ── Score ───────────────────────────────────────────────────────────────────────
+// A score result by a Player on a Song.
 // Only the top 5 per (playerId, songId) are kept (enforced in the controller).
-const Run = sequelize.define("Run", {
+const Score = sequelize.define("Score", {
   id: {
-    type:          DataTypes.INTEGER,
+    type:          DataTypes.UUID,
     primaryKey:    true,
-    autoIncrement: true,
+    allowNull:     false,
+    defaultValue: uuidv7
   },
   highscore: {
     type:      DataTypes.INTEGER,
@@ -100,11 +105,11 @@ const Run = sequelize.define("Run", {
 Song.hasMany(ChartNote, { foreignKey: "songId", onDelete: "CASCADE", as: "chart" });
 ChartNote.belongsTo(Song, { foreignKey: "songId" });
  
-Player.hasMany(Run, { foreignKey: "playerId", onDelete: "CASCADE", as: "runs" });
-Run.belongsTo(Player, { foreignKey: "playerId" });
+Player.hasMany(Score, { foreignKey: "playerId", onDelete: "CASCADE", as: "scores" });
+Score.belongsTo(Player, { foreignKey: "playerId" });
  
-Song.hasMany(Run, { foreignKey: "songId", onDelete: "CASCADE" });
-Run.belongsTo(Song, { foreignKey: "songId" });
+Song.hasMany(Score, { foreignKey: "songId", onDelete: "CASCADE" });
+Score.belongsTo(Song, { foreignKey: "songId" });
 
 
 module.exports = sequelize;
