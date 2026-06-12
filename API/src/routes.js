@@ -220,7 +220,7 @@ router.post("/players",                 addPlayer);
  *       Es conserven únicament les **5 millors puntuacions** ordenades per highscore descendent
  *       Si el jugador ja té 5 puntuacions i la nova no sepra la pitjor, es descarta.
  *       Si el jugador ya tiene 5 scores y el nuevo no supera al peor, se descarta.
- *     tags: [Players]
+ *     tags: [Scores]
  *     parameters:
  *       - in: path
  *         name: playerId
