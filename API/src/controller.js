@@ -99,10 +99,10 @@ async function addPlayer(req, res) {
   // Donar nom al fitxer (la UUID + .extensió)
   if (req.file) {
     const iconFilename = saveIcon(playerId, req.file.buffer, req.file.mimetype)
-  }
 
-  // Desar nom dins la BD
-  await player.update({ playerIcon: iconFilename });
+    // Desar nom dins la BD
+    await player.update({ playerIcon: iconFilename });
+  }
 
   res.status(201).json({
     ...player.toJSON(),
