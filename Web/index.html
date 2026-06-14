@@ -1,11 +1,54 @@
 <!DOCTYPE html>
-<html lang="es-ca">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fruity Tunes</title>
+    <title>Fruity Tunes API</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+    <div class="container">
+        <div id="title">
+            <h1>Fruity Tunes</h1>
+        </div>
+        <div id="subtitle">
+            <p>Dashboard</p>
+        </div>
+        
+        <div class="dashboard">
+            <!-- Canciones Card -->
+            <div class="card" id="songs">
+                <h2>Songs</h2>
+                <div class="search-box">
+                    <input type="text" id="searchSong" placeholder="Search..." onkeyup="filterSongs()">
+                </div>
+                <div id="songsList" class="items-list">
+                    <div class="loading">Cargando canciones...</div>
+                </div>
+            </div>
+
+            <!-- Jugadores Card -->
+            <div class="card" id="players">
+                <h2>Players</h2>
+                <div class="search-box">
+                    <input type="text" id="searchPlayer" placeholder="Search..." onkeyup="filterPlayers()">
+                </div>
+                <div id="playersList" class="items-list">
+                    <div class="loading">Cargando jugadores...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Detalles -->
+        <div id="detailsPanel" style="display: none;">
+            <div class="details-header">
+                <h3 id="detailsTitle"></h3>
+                <button class="close-details" onclick="closeDetails()">&times;</button>
+            </div>
+            <div id="detailsContent"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
