@@ -75,6 +75,10 @@ const Player = sequelize.define("Player", {
     type:      DataTypes.STRING,
     allowNull: false,
   },
+  playerIcon: {
+    type:      DataTypes.STRING,
+    allowNull: true,
+  }
 });
  
 // ── Score ───────────────────────────────────────────────────────────────────────

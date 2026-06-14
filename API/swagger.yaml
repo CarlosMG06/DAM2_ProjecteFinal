@@ -77,6 +77,9 @@ components:
         playerName:
           type: string
           example: RhythmMaster
+        playerIcon:
+          type: string
+          example: profile_icon.png
         levelScores:
           type: array
           items:
@@ -229,6 +232,10 @@ paths:
                           type: string
                           example: RhythmMaster
                           description: Nom del jugador
+                        playerIcon:
+                          type: string
+                          example: profile_icon.png
+                          description: Nom de l'arxiu de la icona de perfil del jugador
         '500':
           description: Error intern del servidor
           content:

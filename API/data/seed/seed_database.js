@@ -6,11 +6,13 @@
 const fs = require('fs');
 const path = require('path');
 const csvParser = require('csv-parser');
-const { sequelize, Song, ChartNote, Player, Score } = require('../src/config/database');
+const { sequelize, Song, ChartNote, Player, Score } = require('../../src/config/database');
+const { saveIcon } = require('../../src/upload');
 
 const SONGS_DIR = path.join(__dirname, 'songs');
 const DEFAULT_PLAYERS_FILE = path.join(__dirname, 'default_players.json');
 const DEFAULT_SCORES_FILE = path.join(__dirname, 'default_scores.csv');
+const ICONS_DIR = path.join(__dirname, "..", "uploads", "icons");
 
 // Funció per llegir CSV
 async function readCSV(filePath, requiredFields = []) {
@@ -35,9 +37,20 @@ async function seedDatabase(force) {
   
   try {
     if (force) {
-      console.log('⚠️  Mode force activat - Esborrant dades existents...');
+      console.log('!!! Mode force activat - Esborrant dades existents...');
       await sequelize.sync({ force: true });
-      console.log('✅ Taules recreades');
+      console.log('+++ Taules recreades');
+
+      // Esborrar també qualsevol fitxer pujat
+      fs.readdir(ICONS_DIR, (err, files) => {
+        if (err) throw err;
+
+        for (const file of files) {
+          fs.unlink(path.join(ICONS_DIR, file), (err) => {
+            if (err) throw err;
+          });
+        }
+      });
     }
     
 
@@ -45,13 +58,13 @@ async function seedDatabase(force) {
       // Verificar si ja hi ha dades
       const songCount = await Song.count();
       if (songCount > 0) {
-        console.log(`⚠️  Ja existeixen ${songCount} cançons. Fes servir --force per sobrescriure.`);
+        console.log(`!!! Ja existeixen ${songCount} cançons. Fes servir --force per sobrescriure.`);
         return;
       }
     }
     
     // ==================== 1. INSERTAR CANÇONS I CHARTS ====================
-    console.log('\n🎵 Insertant cançons i charts...');
+    console.log('\n>>> Insertant cançons i charts...');
     
     const songFolders = fs.readdirSync(SONGS_DIR).filter(item => {
       const itemPath = path.join(SONGS_DIR, item);
@@ -65,12 +78,12 @@ async function seedDatabase(force) {
       const chartPath = path.join(SONGS_DIR, folder, 'chart.csv');
       
       if (!fs.existsSync(metadataPath)) {
-        console.log(`  ⚠️  ${folder}: metadata.json no trobat`);
+        console.log(`!!! ${folder}: metadata.json no trobat`);
         continue;
       }
       
       if (!fs.existsSync(chartPath)) {
-        console.log(`  ⚠️  ${folder}: chart.csv no trobat`);
+        console.log(`!!! ${folder}: chart.csv no trobat`);
         continue;
       }
       
@@ -81,7 +94,7 @@ async function seedDatabase(force) {
       const chartNotes = await readCSV(chartPath, ['inputBeat', 'inputKey']);
       
       if (chartNotes.length === 0) {
-        console.log(`  ⚠️  ${metadata.songTitle}: chart sense notes`);
+        console.log(`!!! ${metadata.songTitle}: chart sense notes`);
         continue;
       }
       
@@ -103,19 +116,19 @@ async function seedDatabase(force) {
       await ChartNote.bulkCreate(notesToInsert);
       
       songsMap.set(metadata.songTitle, song.songId);
-      console.log(`  ✅ ${metadata.songTitle} - ${chartNotes.length} notes`);
+      console.log(`+++ ${metadata.songTitle} - ${chartNotes.length} notes`);
     }
     
     if (songsMap.size === 0) {
-      console.log('  ❌ No s\'han trobat cançons vàlides');
+      console.log('!!! No s\'han trobat cançons vàlides');
       return;
     }
     
     // ==================== 2. INSERTAR JUGADORS PER DEFECTE ====================
-    console.log('\n👥 Insertant jugadors per defecte...');
+    console.log('\n>>> Insertant jugadors per defecte...');
     
     if (!fs.existsSync(DEFAULT_PLAYERS_FILE)) {
-      console.log('  ⚠️  default_players.json no trobat');
+      console.log('!!! default_players.json no trobat');
       return;
     }
     
@@ -128,15 +141,21 @@ async function seedDatabase(force) {
         isDefault: true
       });
       
+      if (playerName === 'Freddy') {
+          const buffer = fs.readFileSync(path.join(__dirname, 'freddy.png'));
+          const iconFilename = saveIcon(player.playerId, buffer, 'image/png');
+          await player.update({ playerIcon: iconFilename });
+      }
+
       playersMap.set(playerName, player.playerId);
-      console.log(`  ✅ ${playerName}`);
+      console.log(`+++ ${playerName}`);
     }
     
     // ==================== 3. INSERTAR PUNTUACIONS PER DEFECTE ====================
-    console.log('\n🏆 Insertant puntuacions per defecte...');
+    console.log('\n>>> Insertant puntuacions per defecte...');
     
     if (!fs.existsSync(DEFAULT_SCORES_FILE)) {
-      console.log('  ⚠️  default_scores.csv no trobat');
+      console.log('!!!  default_scores.csv no trobat');
       return;
     }
     
@@ -150,13 +169,13 @@ async function seedDatabase(force) {
       const songId = songsMap.get(scoreData.songTitle);
       
       if (!playerId) {
-        console.log(`  ⚠️  Jugador no trobat: ${scoreData.playerName}`);
+        console.log(`!!! Jugador no trobat: ${scoreData.playerName}`);
         scoresSkipped++;
         continue;
       }
       
       if (!songId) {
-        console.log(`  ⚠️  Cançó no trobada: ${scoreData.songTitle}`);
+        console.log(`!!! Cançó no trobada: ${scoreData.songTitle}`);
         scoresSkipped++;
         continue;
       }
@@ -172,9 +191,9 @@ async function seedDatabase(force) {
       scoresInserted++;
     }
     
-    console.log(`  ✅ ${scoresInserted} puntuacions insertades`);
+    console.log(`+++ ${scoresInserted} puntuacions insertades`);
     if (scoresSkipped > 0) {
-      console.log(`  ⚠️  ${scoresSkipped} puntuacions omeses (jugador/cançó no trobat)`);
+      console.log(`!!!  ${scoresSkipped} puntuacions omeses (jugador/cançó no trobat)`);
     }
     
     // ==================== RESUMEN FINAL ====================

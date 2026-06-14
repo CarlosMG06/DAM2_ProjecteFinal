@@ -132,6 +132,10 @@ router.post("/songs",         addSong);
  *                         type: string
  *                         example: "RhythmMaster"
  *                         description: Nom del jugador
+ *                       playerIcon:
+ *                         type: string
+ *                         example: "profile_icon.png"
+ *                         description: Nom de l'arxiu de la icona de perfil del jugador
  *       500:
  *         description: Error intern del servidor
  *         content:

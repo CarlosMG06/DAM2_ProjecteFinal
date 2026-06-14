@@ -55,6 +55,7 @@ const swaggerOptions = {
           properties: {
             playerId:   { type: "uuid", example: "019ebbb2-31cb-7a60-8e1d-ce9956756667" },
             playerName: { type: "string", example: "RhythmMaster" },
+            playerIcon: { type: "string", example: "profile_icon.png"},
             levelScores: {
               type: "array",
               items: { $ref: "#/components/schemas/LevelEntry" },
