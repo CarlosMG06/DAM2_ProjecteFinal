@@ -10,7 +10,7 @@ public class Metronome : MonoBehaviour
 
     private int bpm;
     private float offsetMs;
-    private const int marginMs = 140;
+    private const int marginMs = 250;
     private int beatDurationMs;
     private int halfBeatDurationMs;
 
@@ -91,7 +91,7 @@ public class Metronome : MonoBehaviour
             }
             if (timePositionMs >= nextBeatPosMs)
             {
-                BroadcastMessage("OnBeat", activeBeat ?? 0);
+                //BroadcastMessage("OnBeat", activeBeat ?? 0);
                 nextBeatPosMs += beatDurationMs;
             }
             if (timePositionMs >= activeBeatEndPosMs)
@@ -115,7 +115,7 @@ public class Metronome : MonoBehaviour
             }
             if (timePositionMs >= nextHalfBeatPosMs)
             {
-                BroadcastMessage("OnHalfBeat", activeHalfBeat ?? 0);
+                //BroadcastMessage("OnHalfBeat", activeHalfBeat ?? 0);
                 nextHalfBeatPosMs += beatDurationMs;
             }
             if (timePositionMs >= activeHalfBeatEndPosMs)

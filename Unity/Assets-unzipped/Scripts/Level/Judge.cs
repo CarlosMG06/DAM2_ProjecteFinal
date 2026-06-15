@@ -13,8 +13,9 @@ public class Judge : MonoBehaviour
     private int? lastBeat = null;
     private float? lastHalfBeat = null;
     public static Metronome metronome;
-    private bool? keySuccessThisBeat;
-    private bool? keySuccessThisHalfBeat;
+    //[SerializeField] public static PlayerAnimator playerAnimator;
+    private bool keySuccessThisBeat;
+    private bool keySuccessThisHalfBeat;
 
     public Synchronizer synchronizer;
 
@@ -38,16 +39,15 @@ public class Judge : MonoBehaviour
             // Half-beat input: the chart beat e.g. 2.5 corresponds to half-beat index 5
             int expectedHalfBeat = Mathf.RoundToInt(nextInputBeat * 2);
             if ((expectedHalfBeat == activeHalfBeat) && 
-                (nextInputKey == keyCode) &&
-                (keySuccessThisHalfBeat == null))
+                (nextInputKey == keyCode) && !keySuccessThisHalfBeat)
             {
                 EvaluateHalfBeatTiming();
                 keySuccessThisHalfBeat = true;
             }
             else
             {
+                //playerAnimator.OnPlayerKeyFailure();
                 synchronizer.OnPlayerKeyFailure();
-                keySuccessThisHalfBeat = false;
             }
         }
         else
@@ -55,14 +55,14 @@ public class Judge : MonoBehaviour
             // Whole-beat input
             int expectedBeat = Mathf.RoundToInt(nextInputBeat);
             if ((expectedBeat == activeBeat) && 
-                (nextInputKey == keyCode) &&
-                (keySuccessThisBeat == null))
+                (nextInputKey == keyCode) && !keySuccessThisBeat)
             {
                 EvaluateBeatTiming();
                 keySuccessThisBeat = true;
             }
             else
             {
+                //playerAnimator.OnPlayerKeyFailure();
                 synchronizer.OnPlayerKeyFailure();
                 keySuccessThisBeat = false;
             }
@@ -116,6 +116,7 @@ public class Judge : MonoBehaviour
             scoreToAdd  = 40;
         }
 
+        //playerAnimator.OnPlayerKeySuccess();
         synchronizer.OnPlayerKeySuccess(ratingIndex, scoreToAdd);
     }
 
@@ -124,7 +125,7 @@ public class Judge : MonoBehaviour
     public void OnEnterBeat(int? activeBeat)
     {
         this.activeBeat = activeBeat;
-        keySuccessThisBeat = null;
+        keySuccessThisBeat = false;
     }
 
     public void OnExitBeat(int? activeBeat)
@@ -135,7 +136,7 @@ public class Judge : MonoBehaviour
         // Only penalise a missed whole-beat if the chart actually expected one here
         var (nextInputBeat, _) = LevelRunData.GetSong().GetChart().GetNextInput(lastBeat ?? 0 -1);
         bool wholeBeatExpected = (nextInputBeat -1 == lastBeat && nextInputBeat % 1 == 0);
-        if (wholeBeatExpected && (keySuccessThisBeat == null))
+        if (wholeBeatExpected && (keySuccessThisBeat != true))
         {
             Debug.Log("Penalising whole-beat");
             synchronizer.OnPlayerKeyFailure();
@@ -147,7 +148,7 @@ public class Judge : MonoBehaviour
     public void OnEnterHalfBeat(float? activeHalfBeat)
     {
         this.activeHalfBeat = activeHalfBeat;
-        keySuccessThisHalfBeat = null;
+        keySuccessThisHalfBeat = false;
     }
 
     public void OnExitHalfBeat(float? activeHalfBeat)
@@ -158,11 +159,11 @@ public class Judge : MonoBehaviour
         // Only penalise a missed half-beat if the chart actually expected one here
         var (nextInputBeat, _) = LevelRunData.GetSong().GetChart().GetNextInput((lastBeat ?? 0));
         bool halfBeatExpected = (nextInputBeat == lastHalfBeat - 1 && nextInputBeat % 1 == 0.5f);
-        if (halfBeatExpected && (keySuccessThisHalfBeat == null))
+        if (halfBeatExpected && (keySuccessThisHalfBeat != true))
         {
             Debug.Log("Penalising half-beat");
+            //playerAnimator.OnPlayerKeyFailure();
             synchronizer.OnPlayerKeyFailure();
         }
-        keySuccessThisHalfBeat = null;
     }
 }

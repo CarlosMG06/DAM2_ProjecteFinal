@@ -2139,7 +2139,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30ced698bb0a0da21b274d498a91ce1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Judge
-  synchronizer: {fileID: 0}
+  synchronizer: {fileID: 1028083435}
 --- !u!114 &1028083430
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2198,7 +2198,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e05d53660d770c4609503f4f52e7af6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
-  judge: {fileID: 0}
+  judge: {fileID: 1028083429}
 --- !u!114 &1028083434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2214,6 +2214,8 @@ MonoBehaviour:
   leftCharacter: {fileID: 1809892732}
   playerCharacter: {fileID: 1507959429}
   rightCharacter: {fileID: 1344962560}
+  nudgeDistance: 0.25
+  nudgeDurationMs: 200
 --- !u!114 &1028083435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2240,7 +2242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ccc299bdf2f1156a9f85e7ec1e9eb50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInput
-  judge: {fileID: 0}
+  judge: {fileID: 1028083429}
 --- !u!1 &1065478978
 GameObject:
   m_ObjectHideFlags: 0

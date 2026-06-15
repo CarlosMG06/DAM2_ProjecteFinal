@@ -58,38 +58,36 @@ public class AudioPlayer : MonoBehaviour
 
     public void PlayMusic(AudioClip clip, bool loop = true, bool broadcastEnd = false)
     {   
-       GameObject obj = Instantiate(instance.MusicPrefab);
-       AudioSource source = obj.GetComponent<AudioSource>();
-       source.clip = clip;
-       source.volume = GlobalGameData.GetOptions().GetMusicVolume();
-       currentSongLengthMs = (int)(clip.length * 1000);
-       if (loop)
-        {
-            source.loop = true;
-        }
+        GameObject obj = Instantiate(instance.MusicPrefab);
+        AudioSource source = obj.GetComponent<AudioSource>();
+        source.clip = clip;
+        source.volume = GlobalGameData.GetOptions().GetMusicVolume();
+        currentSongLengthMs = (int)(clip.length * 1000);
+        source.loop = loop;
         source.Play();
         currentMusicSource = source;
         if (broadcastEnd)
         {
-            StartCoroutine(BroadcastEndOfSong(source));
+            //StartCoroutine(BroadcastEndOfSong(source));
+            StartCoroutine(UpdateTimePosition());
         }
     }
 
-    private IEnumerator BroadcastEndOfSong(AudioSource source)
+    /*private IEnumerator BroadcastEndOfSong(AudioSource source)
     {
         while (source.isPlaying)
         {
             yield return null;
         }
         BroadcastMessage("OnSongEnd", SendMessageOptions.DontRequireReceiver);
-    }
+    }*/
 
     void OnLevelStart()
     {
         AudioClip song = LevelRunData.GetSong().GetAudio();
         Debug.Log($"AudioPlayer - song.audio: {song}");
         PlayMusic(song, false, true);
-        StartCoroutine(UpdateTimePosition());
+        //StartCoroutine(UpdateTimePosition());
     }
 
     void OnLevelEnd()
@@ -99,6 +97,24 @@ public class AudioPlayer : MonoBehaviour
     
     IEnumerator UpdateTimePosition()
     {
+        // Espera fins que l'AudioSource realment comenci a sonar
+        while (!currentMusicSource.isPlaying)
+            yield return null;
+
+        while (currentMusicSource.isPlaying)
+        {
+            // Fa servir la posició real de l'AudioSource en lloc d'acumular deltaTime
+            float timePositionMs = (float)currentMusicSource.timeSamples 
+                                / currentMusicSource.clip.frequency * 1000f;
+            LevelRunData.SetTimePositionMs(timePositionMs);
+            display.UpdateSongProgress(currentMusicSource);
+            yield return null;
+        }
+
+        BroadcastMessage("OnSongEnd", SendMessageOptions.DontRequireReceiver);
+    }
+    /*IEnumerator UpdateTimePosition()
+    {
         while (true)
         {
             float deltaTimeMs = Time.deltaTime * 1000f;
@@ -107,7 +123,7 @@ public class AudioPlayer : MonoBehaviour
             display.UpdateSongProgress(currentMusicSource);
             yield return null;
         }
-    }
+    }*/
 
     public int GetCurrentSongLengthMs() {
         return currentSongLengthMs;
