@@ -204,11 +204,11 @@ async function seedDatabase(force) {
     const totalPlayers = await Player.count();
     const totalScores = await Score.count();
     
-    console.log(`\n📊 Resum final:`);
-    console.log(`   🎵 Cançons: ${totalSongs}`);
-    console.log(`   🎹 Notes totals: ${totalNotes}`);
-    console.log(`   👥 Jugadors: ${totalPlayers}`);
-    console.log(`   🏆 Puntuacions: ${totalScores}`);
+    console.log(`\n[i] Resum final:`);
+    console.log(`   - Cançons: ${totalSongs}`);
+    console.log(`   - Notes totals: ${totalNotes}`);
+    console.log(`   - Jugadors: ${totalPlayers}`);
+    console.log(`   - Puntuacions: ${totalScores}`);
     
   } catch (error) {
     console.error('❌ Error en fer seeding:', error);

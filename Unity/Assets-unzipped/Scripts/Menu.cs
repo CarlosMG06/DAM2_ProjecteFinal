@@ -15,8 +15,9 @@ public class Menu : MonoBehaviour
     [SerializeField] private TextMeshProUGUI MusicVolumeText;
     [SerializeField] private GameObject SFXSlider;
     [SerializeField] private TextMeshProUGUI SFXVolumeText;
+    [SerializeField] private TextMeshProUGUI PlayerNameText; 
     [SerializeField] private AudioPlayer audioPlayer;
-    [SerializeField] private ChartComposer chartComposer;
+    //[SerializeField] private ChartComposer chartComposer;
     private static bool shouldShowLevelSelect = false;
 
     public GameObject LevelSelectSongPrefab;
@@ -29,19 +30,20 @@ public class Menu : MonoBehaviour
         print("ShowLeaderboardSongs");
         foreach (Transform child in LeaderboardSongParent)
             Destroy(child.gameObject);
-        foreach ((int index, SongData song) in GlobalGameData.GetSongs().Select((song, index) => (index, song))) {
-            print("ShowLeaderboardSongs: " + song.GetTitle());
+        foreach (SongData song in GlobalGameData.GetSongs()) {
+            string songId = song.GetId();
+            Debug.Log("ShowLeaderboardSongs: " + song.GetTitle());
             GameObject songObject = Instantiate(LevelSelectSongPrefab, LeaderboardSongParent);
             songObject.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = song.GetTitle();
-            songObject.GetComponent<Button>().onClick.AddListener(() => ShowLeaderboardScores(index));
+            songObject.GetComponent<Button>().onClick.AddListener(() => ShowLeaderboardScores(songId));
 
         }
     }
 
-    public void ShowLeaderboardScores(int songIndex) {
+    public void ShowLeaderboardScores(string songId) {
         foreach (Transform child in LeaderboardScoreParent)
             Destroy(child.gameObject);
-        foreach (LevelSaveData levelSaveData in GlobalGameData.GetLevels()[songIndex]) {
+        foreach (LevelSaveData levelSaveData in GlobalGameData.GetLevels()[songId]) {
             GameObject scoreObject = Instantiate(LeaderboardScorePrefab, LeaderboardScoreParent);
             scoreObject.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = levelSaveData.GetPlayerName();
             scoreObject.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = levelSaveData.GetHighscore().ToString();
@@ -52,10 +54,10 @@ public class Menu : MonoBehaviour
     public void ShowLevelSelectSongs() {
         foreach (Transform child in LevelSelectSongParent)
             Destroy(child.gameObject);
-        foreach ((int index, SongData song) in GlobalGameData.GetSongs().Select((song, index) => (index, song))) {
+        foreach (SongData song in GlobalGameData.GetSongs()) {
             GameObject songObject = Instantiate(LevelSelectSongPrefab, LevelSelectSongParent);
             songObject.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = song.GetTitle();
-            songObject.GetComponent<Button>().onClick.AddListener(() => LoadLevel(index));
+            songObject.GetComponent<Button>().onClick.AddListener(() => LoadLevel(song));
         }
     }
 
@@ -64,7 +66,7 @@ public class Menu : MonoBehaviour
         shouldShowLevelSelect = show;
     }
 
-    void Start()
+    async void Start()
     {
         if (shouldShowLevelSelect)
         {
@@ -75,7 +77,10 @@ public class Menu : MonoBehaviour
         {
             ToTitle();
         }
-        chartComposer.DefineCharts();
+        //chartComposer.DefineCharts();
+
+        await GlobalGameData.Initialize();
+        PlayerNameText.text = GlobalGameData.GetPlayerName();
 
         // Set volumes according to saved options
         float musicVolume = GlobalGameData.GetOptions().GetMusicVolume();
@@ -86,14 +91,10 @@ public class Menu : MonoBehaviour
         SFXVolumeText.text = "SFX: " + sfxVolume * 100 + "%";
 
         // Play Main Menu music
-        AudioClip mainMenuMusic = Resources.Load<AudioClip>("Audio/Music/Fruit Salad");
+        AudioClip mainMenuMusic = Resources.Load<AudioClip>("Audio/Music/fruit-salad");
         audioPlayer.PlayMusic(mainMenuMusic);
     }
 
-    private string GetRandomPlayerName()
-    {
-        return "Player " + Random.Range(1, 1000000);
-    }
     public void ToTitle()
     {
         TitleScreenUI.SetActive(true);
@@ -123,12 +124,9 @@ public class Menu : MonoBehaviour
         Application.Quit();
     }
 
-    public void LoadLevel(int songIndex)
+    public void LoadLevel(SongData songData)
     {
-        SongData songData = GlobalGameData.GetSongs()[songIndex];
         LevelRunData.SetSong(songData);
-        LevelRunData.SetSongIndex(songIndex);
-        
         SceneManager.LoadScene("Level");
     }
 

@@ -2160,6 +2160,7 @@ MonoBehaviour:
   resultOkText: {fileID: 1441447291}
   resultGreatText: {fileID: 79127539}
   resultPerfectText: {fileID: 1805631110}
+  resultRankText: {fileID: 1716814614}
   songPlayingUI: {fileID: 1623393451}
   levelResultsUI: {fileID: 603120302}
   scoreText: {fileID: 1330692555}

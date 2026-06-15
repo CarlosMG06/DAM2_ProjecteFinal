@@ -87,6 +87,7 @@ public class AudioPlayer : MonoBehaviour
     void OnLevelStart()
     {
         AudioClip song = LevelRunData.GetSong().GetAudio();
+        Debug.Log($"AudioPlayer - song.audio: {song}");
         PlayMusic(song, false, true);
         StartCoroutine(UpdateTimePosition());
     }

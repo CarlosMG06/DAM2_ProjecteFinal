@@ -6,13 +6,12 @@ public class LevelRunData {
     */
 
     public static SongData song;
-    public static int songIndex;
     public static int score;
     public static int combo;
     public static int maxCombo;
     public static int[] ratingCounts = new int[4]; // Miss, Ok, Great, Perfect
     public static float timePositionMs;
-    public static string rank = "A";
+    public static string rank = "";
     
     static LevelRunData() {}
 
@@ -21,6 +20,7 @@ public class LevelRunData {
         timePositionMs = 0f;
         combo = 0;
         maxCombo = 0;
+        rank = "";
         for (int i = 0; i < ratingCounts.Length; i++) {
             ratingCounts[i] = 0;
         }
@@ -30,12 +30,6 @@ public class LevelRunData {
         song = _song; 
     } 
     public static SongData GetSong() { return song; }
-
-    public static void SetSongIndex(int _songIndex) {
-        songIndex = _songIndex;
-    }
-
-    public static int GetSongIndex() { return songIndex; }
 
     public static void AddScore(int scoreToAdd) {
         score += scoreToAdd;
@@ -68,5 +62,10 @@ public class LevelRunData {
         timePositionMs = _timePositionMs;
     } 
     public static float GetTimePositionMs() { return timePositionMs; }
+
+    public static void SetRank(string _rank) {
+        rank = _rank;
+    }
+    public static string GetRank() { return rank; }
 }
 

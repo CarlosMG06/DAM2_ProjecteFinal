@@ -10,7 +10,7 @@ public class Metronome : MonoBehaviour
 
     private int bpm;
     private float offsetMs;
-    private const int marginMs = 250;
+    private const int marginMs = 140;
     private int beatDurationMs;
     private int halfBeatDurationMs;
 

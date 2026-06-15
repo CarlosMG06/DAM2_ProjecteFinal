@@ -236,11 +236,11 @@ tr:hover {
     font-size: 12px;
 }
 
-.rank-S { background: goldenrod; }
-.rank-A { background: peru;  }
-.rank-B { background: chartreuse; }
-.rank-C { background: cornflowerblue; }
-.rank-D { background: plum; }
+.rank-S { background: #FC3; }
+.rank-A { background: #C6F; }
+.rank-B { background: #6CF; }
+.rank-C { background: #9F6; }
+.rank-D { background: #F66; }
 
 @media (max-width: 768px) {
     .dashboard {

@@ -23,18 +23,28 @@ public class APIConnection
 
     private APIConnection() { }
 
+
+    [Serializable]
+    private class ScorePayload
+    {
+        public string songId;
+        public int highscore;
+        public int maxCombo;
+        public string rank;
+    }
+
     public async Task<bool> SendScore()
     {
         try
         {
-            // Use JsonUtility — fix SongData.id access separately
-            var json = $@"{{
-                ""songId"":   {LevelRunData.song.id},
-                ""highscore"": {LevelRunData.score},
-                ""maxCombo"": {LevelRunData.maxCombo},
-                ""rank"":     ""{LevelRunData.rank}""
-            }}";
+            var payload = new ScorePayload {
+                songId    = LevelRunData.song.id,
+                highscore = LevelRunData.score,
+                maxCombo  = LevelRunData.maxCombo,
+                rank      = LevelRunData.rank
+            };
 
+            var json    = JsonUtility.ToJson(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync($"scores/{GlobalGameData.playerId}", content);
             response.EnsureSuccessStatusCode();
@@ -52,7 +62,10 @@ public class APIConnection
         }
     }
 
-    public async Task<int> CreatePlayer(string playerName)
+    [Serializable]
+    private class PlayerResponse { public string playerId; }
+
+    public async Task<string> CreatePlayer(string playerName)
     {
         try
         {
@@ -62,21 +75,22 @@ public class APIConnection
             response.EnsureSuccessStatusCode();
 
             var body = await response.Content.ReadAsStringAsync();
-            return JsonUtility.FromJson<int>(body);
+            var data = JsonUtility.FromJson<PlayerResponse>(body);
+            return data.playerId;
         }
         catch (HttpRequestException ex)
         {
             Debug.LogError($"[APIConnection] CreatePlayer failed: {ex.Message}");
-            return -1;
+            return null;
         }
         catch (TaskCanceledException)
         {
             Debug.LogError("[APIConnection] CreatePlayer timed out");
-            return -1;
+            return null;
         }
     }
 
-    public async Task<List<LevelSaveData>> GetLevels(int songId)
+    public async Task<List<LevelSaveData>> GetLevels(string songId)
     {
         try
         {
@@ -117,7 +131,6 @@ public class APIConnection
             var songs = new List<SongData>();
             foreach (var raw in wrapper.songs)
                 songs.Add(raw.ToSongData());
-
             return songs;
         }
         catch (HttpRequestException ex)
@@ -143,7 +156,7 @@ public class APIConnection
     [Serializable]
     private class RawSong
     {
-        public int songId;
+        public string songId;
         public string songTitle;
         public int bpm;
         public string audioFile;
@@ -152,10 +165,19 @@ public class APIConnection
 
         public SongData ToSongData()
         {
-            var song = new SongData(songId, songTitle, bpm, Resources.Load<AudioClip>(audioFile), offset)
+            string audioName = System.IO.Path.GetFileNameWithoutExtension(audioFile);
+            
+            var song = new SongData(
+                songId, songTitle, bpm, 
+                Resources.Load<AudioClip>($"Audio/Music/{audioName}"), 
+                offset)
             {
                 chart = BuildChart()
             };
+
+            if (song.audio == null)
+                Debug.LogError($"[APIConnection] AudioClip not found: Audio/Music/{audioName}");
+
             return song;
         }
 
@@ -163,18 +185,25 @@ public class APIConnection
         {
             var inputs = new Dictionary<float, Key>();
             foreach (var note in chart)
-                inputs[note.time] = Enum.Parse<Key>(note.noteType);
+                inputs[note.inputBeat] = MapInputKey(note.inputKey);
 
             return new SongChart(inputs);
         }
+
+        private static Key MapInputKey(string inputKey) => inputKey.ToLower() switch
+        {
+            "left"  => Key.LeftArrow,
+            "right" => Key.RightArrow,
+            _       => throw new ArgumentException($"Unknown inputKey: '{inputKey}'")
+        };
     }
 
     [Serializable]
     private class RawNote
     {
-        public int id;
-        public float time;
-        public string noteType;
+        public string id;
+        public float inputBeat;
+        public string inputKey;
     }
 
     [Serializable]

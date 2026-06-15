@@ -20,21 +20,29 @@ public class Synchronizer : MonoBehaviour
         BroadcastMessage("OnLevelStart");
     }
 
-    void OnSongEnd() {
-        // Check in case of error
-        float timePositionMs = LevelRunData.GetTimePositionMs();
-        float currentSongLengthMs = audioPlayer.GetCurrentSongLengthMs();
-        /*if (timePositionMs < currentSongLengthMs)
-        {
-            Debug.LogWarning("OnSongEnd called, but timePositionMs is " + timePositionMs + " and currentSongLengthMs is " + currentSongLengthMs);
-            return;
-        }*/
-        
+    async void OnSongEnd() {
         BroadcastMessage("OnLevelEnd");
-        APIConnection.Instance.SendScore();
+        CalculateRank();
+        await APIConnection.Instance.SendScore();
         display.ShowResults();
     }
 
+    void CalculateRank() {
+        int score = LevelRunData.GetScore();
+        int maxScore = LevelRunData.GetSong().GetChart().GetTotalRequiredInputs() * 100;
+        
+        float percentage = (float)score / (float)maxScore;
+        int missCount = LevelRunData.GetRatingCount(0);
+        
+        string rank;
+        if (percentage > 0.9 && missCount == 0) { rank = "S"; } 
+        else if (percentage > 0.9) { rank = "A"; }
+        else if (percentage > 0.8) { rank = "B"; }
+        else if (percentage > 0.6) { rank = "C"; }
+        else { rank = "D"; }
+        LevelRunData.SetRank(rank);
+        display.UpdateRank();
+    }
     public void OnPlayerKeySuccess(int ratingIndex, int scoreToAdd) {
         if (scoreToAdd > 0) {
             LevelRunData.AddScore(scoreToAdd);

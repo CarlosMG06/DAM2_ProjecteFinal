@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,80 +12,49 @@ public class GlobalGameData {
             Title, BPM, Audio, Offset, Chart
 
         Options Save Data:
-            Music Volume, SFX Volume, Language?, Keymapping?
+            Music Volume, SFX Volume
         
         Level Save Data:
             Highscore(s), Rank(s)
         
         Player Data:
-            ID, Name, IconPath
+            ID, Name
     */
 
     private static List<SongData> songs;
     private static OptionsData options;
-    private static Dictionary<int, List<LevelSaveData>> levels;
+    private static Dictionary<string, List<LevelSaveData>> levels;
     private static string playerName;
-    public static int playerId;
+    public static string playerId;
     private static List<PlayerData> players;
 
     static GlobalGameData() {
-        CreatePlayer();
         songs = new List<SongData>();
-        songs.Add(new SongData(
-            1,
-            "Must, Be Nice",
-            105,
-            Resources.Load<AudioClip>("Audio/Music/Must, Be Nice"),
-            0f
-        ));
-        songs.Add(new SongData(
-            2,
-            "Climbing Up The Wrong Vine",
-            110,
-            Resources.Load<AudioClip>("Audio/Music/Climbing Up The Wrong Vine (WIP)"),
-            0f
-        ));
-        GetSongsFromAPI();
         options = new OptionsData();
-        levels = new Dictionary<int, List<LevelSaveData>>();
-        levels[0] = new List<LevelSaveData>();
-        levels[0].Add(new LevelSaveData(
-            "Player1",
-            10000,
-            "SS"
-        ));
-        levels[0].Add(new LevelSaveData(
-            "Player3",
-            3000,
-            "B"
-        ));
-        levels[1] = new List<LevelSaveData>();
-        levels[1].Add(new LevelSaveData(
-            "Player4",
-            4000,
-            "C"
-        ));
-        levels[1].Add(new LevelSaveData(
-            "Player5",
-            5000,
-            "D"
-        ));
-        GetLevelsFromAPI();
+        levels = new Dictionary<string, List<LevelSaveData>>();
+    }
+
+    public static async Task Initialize()
+    {
+        await CreatePlayer();
+        await GetSongsFromAPI();
+        await GetLevelsFromAPI();
     }
 
     private static async Task GetLevelsFromAPI() {
         foreach (SongData song in songs) {
             List<LevelSaveData> apiLevels = await APIConnection.Instance.GetLevels(song.id);
             if (apiLevels != null) {
+                levels[song.id] = new List<LevelSaveData>();
                 levels[song.id].AddRange(apiLevels);
             }
         }
     }
 
     private static async Task CreatePlayer() {
-        playerName = "Player" + Random.Range(1, 1000000);
+        playerName = "Player" + UnityEngine.Random.Range(1, 1000000);
         playerId = await APIConnection.Instance.CreatePlayer(playerName);
-        if (playerId == -1) {
+        if (playerId == null) {
             Debug.LogError("Failed to create player");
         }
     }
@@ -100,26 +71,28 @@ public class GlobalGameData {
         return songs.Where(song => song.GetTitle() == title).ToList()[0];
     }
     public static OptionsData GetOptions() { return options; }
-    public static Dictionary<int, List<LevelSaveData>> GetLevels() { return levels; }
+    public static Dictionary<string, List<LevelSaveData>> GetLevels() { return levels; }
     public static List<PlayerData> GetPlayers() { return players; }
+
+    public static string GetPlayerName() { return playerName; }
 }
 
 public class SongData {
-    public int id;
+    public string id;
     public string title;
     public int bpm;
     public AudioClip audio;
     public float offsetMs;
     public SongChart chart;
 
-    public SongData(int id, string title, int bpm, AudioClip audio, float offsetMs) {
+    public SongData(string id, string title, int bpm, AudioClip audio, float offsetMs) {
         this.id = id;
         this.title = title;
         this.bpm = bpm;
         this.audio = audio;
     }
 
-    public int GetId() { return id; }
+    public string GetId() { return id; }
     public string GetTitle() { return title; }
     public int GetBPM() { return bpm; }
     public AudioClip GetAudio() { return audio; }
@@ -139,15 +112,9 @@ public class OptionsData {
     private float musicVolume;
     private float sfxVolume;
 
-    //public enum Language {
-    //    ENG, ESP, CAT
-    //};
-    //private Language language;
-
     public OptionsData() {
         this.musicVolume = 1f;
         this.sfxVolume = 1f;
-        // this.language = Language.ENG;
     }
     
     public void SetMusicVolume(float musicVolume) {
@@ -159,12 +126,6 @@ public class OptionsData {
         this.sfxVolume = sfxVolume;
     }
     public float GetSFXVolume() { return sfxVolume; }
-
-    //public void SetLanguage(Language language) {
-    //    this.language = language;
-    //}
-    //public Language GetLanguage() { return language; }
-
 }
 
 public class LevelSaveData {
@@ -204,15 +165,43 @@ public class LevelSaveData {
 public class PlayerData {
     private string playerID;
     private string playerName;
-    private string iconPath;
 
-    public PlayerData(string _playerID, string _playerName, string _iconPath) {
+    public PlayerData(string _playerID, string _playerName) {
         this.playerID = _playerID;
         this.playerName = _playerName;
-        this.iconPath = _iconPath;
     }
 
     public string GetPlayerID() { return playerID; }
     public string GetPlayerName() { return playerName; }
     public void SetPlayerName(string name) { playerName = name; }
+}
+
+public class SongChart {
+    private Dictionary<float, Key> requiredInputs;
+    private float lastInputBeat;
+
+    public SongChart(Dictionary<float, Key> requiredInputs) {
+        this.requiredInputs = requiredInputs;
+        float maxBeat = 0;
+        foreach (var beat in requiredInputs.Keys) {
+            maxBeat = Math.Max(maxBeat, beat);
+        }
+        this.lastInputBeat = maxBeat;
+    }
+
+    public (float, Key?) GetNextInput(float lastBeat) {
+        float nextInputBeat = lastBeat + 0.5f;
+        while (!requiredInputs.ContainsKey(nextInputBeat)) {
+            nextInputBeat += 0.5f;
+            if (nextInputBeat > lastInputBeat) {
+                return (-1, null);
+            }
+        }
+        Key nextInputKey = requiredInputs[nextInputBeat];
+        return (nextInputBeat, nextInputKey);
+    }
+
+    public int GetTotalRequiredInputs() {
+        return requiredInputs.Count;
+    }
 }

@@ -15,6 +15,7 @@ public class Display : MonoBehaviour
     [SerializeField] private GameObject resultOkText;
     [SerializeField] private GameObject resultGreatText;
     [SerializeField] private GameObject resultPerfectText;
+    [SerializeField] private GameObject resultRankText;
     private List<GameObject> ratingList;
     [SerializeField] private GameObject songPlayingUI;
     [SerializeField] private GameObject levelResultsUI;
@@ -93,6 +94,20 @@ public class Display : MonoBehaviour
                 break;
         }
     }
+
+    public void UpdateRank()
+    {
+        string rank = LevelRunData.GetRank();
+        resultRankText.GetComponent<TextMeshProUGUI>().text = rank;
+        
+        Color color;
+        if (rank == "S") { color = new Color(1.0f, 0.8f, 0.2f, 1.0f); }
+        else if (rank == "A") { color = new Color(0.8f, 0.4f, 1.0f, 1.0f); }
+        else if (rank == "B") { color = new Color(0.4f, 0.8f, 1.0f, 1.0f); }
+        else if (rank == "C") { color = new Color(0.6f, 1.0f, 0.4f, 1.0f); }
+        else { color = new Color(1.0f, 0.4f, 0.4f, 1.0f); }
+        resultRankText.GetComponent<TextMeshProUGUI>().color = color;
+    }
     
     public IEnumerator ShowYouIndicator()
     {
@@ -147,8 +162,8 @@ public class Display : MonoBehaviour
         int score = LevelRunData.GetScore();
         songPlayingUI.SetActive(false);
         levelResultsUI.SetActive(true);
-        resultScoreText.text = "Score: " + score;
-        resultMaxComboText.text = "Max Combo: x" + LevelRunData.GetMaxCombo();
+        resultScoreText.text = "" + score;
+        resultMaxComboText.text = "x" + LevelRunData.GetMaxCombo();
     }
 
     public void ToLevelSelect()

@@ -96,9 +96,10 @@ async function addPlayer(req, res) {
   const player = await Player.create({ playerName });
   const { playerId } = player;
 
+  const iconFilename = null;
   // Donar nom al fitxer (la UUID + .extensió)
   if (req.file) {
-    const iconFilename = saveIcon(playerId, req.file.buffer, req.file.mimetype)
+    iconFilename = saveIcon(playerId, req.file.buffer, req.file.mimetype)
 
     // Desar nom dins la BD
     await player.update({ playerIcon: iconFilename });
@@ -106,7 +107,7 @@ async function addPlayer(req, res) {
 
   res.status(201).json({
     ...player.toJSON(),
-    playerIcon: iconUrl(req, iconFilename),
+    playerIcon: iconFilename ? iconUrl(req, iconFilename) : null,
     levelScores: [],
   });
 }

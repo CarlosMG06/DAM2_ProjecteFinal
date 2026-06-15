@@ -13,8 +13,8 @@ public class Judge : MonoBehaviour
     private int? lastBeat = null;
     private float? lastHalfBeat = null;
     public static Metronome metronome;
-    private bool keySuccessThisBeat;
-    private bool keySuccessThisHalfBeat;
+    private bool? keySuccessThisBeat;
+    private bool? keySuccessThisHalfBeat;
 
     public Synchronizer synchronizer;
 
@@ -37,7 +37,9 @@ public class Judge : MonoBehaviour
         {
             // Half-beat input: the chart beat e.g. 2.5 corresponds to half-beat index 5
             int expectedHalfBeat = Mathf.RoundToInt(nextInputBeat * 2);
-            if (expectedHalfBeat == activeHalfBeat && nextInputKey == keyCode)
+            if ((expectedHalfBeat == activeHalfBeat) && 
+                (nextInputKey == keyCode) &&
+                (keySuccessThisHalfBeat == null))
             {
                 EvaluateHalfBeatTiming();
                 keySuccessThisHalfBeat = true;
@@ -45,15 +47,16 @@ public class Judge : MonoBehaviour
             else
             {
                 synchronizer.OnPlayerKeyFailure();
+                keySuccessThisHalfBeat = false;
             }
         }
         else
         {
             // Whole-beat input
             int expectedBeat = Mathf.RoundToInt(nextInputBeat);
-            print("expectedBeat: " + expectedBeat);
-            print("activeBeat: " + activeBeat);
-            if (expectedBeat == activeBeat)
+            if ((expectedBeat == activeBeat) && 
+                (nextInputKey == keyCode) &&
+                (keySuccessThisBeat == null))
             {
                 EvaluateBeatTiming();
                 keySuccessThisBeat = true;
@@ -61,6 +64,7 @@ public class Judge : MonoBehaviour
             else
             {
                 synchronizer.OnPlayerKeyFailure();
+                keySuccessThisBeat = false;
             }
         }
     }
@@ -96,12 +100,12 @@ public class Judge : MonoBehaviour
 
         int ratingIndex;
         int scoreToAdd;
-        if (distanceFromCenter <= marginMs * 0.2f)
+        if (distanceFromCenter <= marginMs * 0.5f)
         {
             ratingIndex = 3;
             scoreToAdd  = 100;
         }
-        else if (distanceFromCenter <= marginMs * 0.5f)
+        else if (distanceFromCenter <= marginMs * 0.8f)
         {
             ratingIndex = 2;
             scoreToAdd  = 70;
@@ -109,7 +113,7 @@ public class Judge : MonoBehaviour
         else
         {
             ratingIndex = 1;
-            scoreToAdd  = 50;
+            scoreToAdd  = 40;
         }
 
         synchronizer.OnPlayerKeySuccess(ratingIndex, scoreToAdd);
@@ -120,7 +124,7 @@ public class Judge : MonoBehaviour
     public void OnEnterBeat(int? activeBeat)
     {
         this.activeBeat = activeBeat;
-        keySuccessThisBeat = false;
+        keySuccessThisBeat = null;
     }
 
     public void OnExitBeat(int? activeBeat)
@@ -130,12 +134,10 @@ public class Judge : MonoBehaviour
 
         // Only penalise a missed whole-beat if the chart actually expected one here
         var (nextInputBeat, _) = LevelRunData.GetSong().GetChart().GetNextInput(lastBeat ?? 0 -1);
-        print("nextInputBeat: " + nextInputBeat);
-        print("lastBeat: " + lastBeat);
         bool wholeBeatExpected = (nextInputBeat -1 == lastBeat && nextInputBeat % 1 == 0);
-        if (wholeBeatExpected && !keySuccessThisBeat)
+        if (wholeBeatExpected && (keySuccessThisBeat == null))
         {
-            print("penalising whole-beat");
+            Debug.Log("Penalising whole-beat");
             synchronizer.OnPlayerKeyFailure();
         }
     }
@@ -145,7 +147,7 @@ public class Judge : MonoBehaviour
     public void OnEnterHalfBeat(float? activeHalfBeat)
     {
         this.activeHalfBeat = activeHalfBeat;
-        keySuccessThisHalfBeat = false;
+        keySuccessThisHalfBeat = null;
     }
 
     public void OnExitHalfBeat(float? activeHalfBeat)
@@ -155,12 +157,12 @@ public class Judge : MonoBehaviour
 
         // Only penalise a missed half-beat if the chart actually expected one here
         var (nextInputBeat, _) = LevelRunData.GetSong().GetChart().GetNextInput((lastBeat ?? 0));
-        print("lastHalfBeat: " + lastHalfBeat);
         bool halfBeatExpected = (nextInputBeat == lastHalfBeat - 1 && nextInputBeat % 1 == 0.5f);
-        if (halfBeatExpected && !keySuccessThisHalfBeat)
+        if (halfBeatExpected && (keySuccessThisHalfBeat == null))
         {
-            print("penalising half-beat");
+            Debug.Log("Penalising half-beat");
             synchronizer.OnPlayerKeyFailure();
         }
+        keySuccessThisHalfBeat = null;
     }
 }
